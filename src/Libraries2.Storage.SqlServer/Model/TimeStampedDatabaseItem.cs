@@ -1,6 +1,6 @@
 ﻿using System;
 using Xlent.Lever.Libraries2.Standard.Assert;
-using Xlent.Lever.Libraries2.Storage.SqlServer.Storage;
+using Xlent.Lever.Libraries2.Standard.Storage.Model;
 
 namespace Xlent.Lever.Libraries2.Storage.SqlServer.Model
 {
@@ -16,7 +16,8 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.Model
         /// <inheritdoc />
         public DateTimeOffset UpdatedAt { get; set; }
 
-        public override void Validate(string errorLocaction)
+        /// <inheritdoc />
+        public override void Validate(string errorLocaction, string propertyPath = "")
         {
             base.Validate(errorLocaction);
             var now = DateTimeOffset.Now;

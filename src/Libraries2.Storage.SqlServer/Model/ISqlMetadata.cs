@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Xlent.Lever.Libraries2.Storage.SqlServer.Storage;
+using Xlent.Lever.Libraries2.Standard.Storage.Model;
 
 namespace Xlent.Lever.Libraries2.Storage.SqlServer.Model
 {

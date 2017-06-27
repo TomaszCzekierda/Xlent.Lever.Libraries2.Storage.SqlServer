@@ -28,7 +28,7 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.Model
         public abstract IEnumerable<string> CustomColumnNames { get; }
 
         /// <inheritdoc />
-        public virtual void Validate(string errorLocaction)
+        public virtual void Validate(string errorLocaction, string propertyPath = "")
         {
             FulcrumValidate.IsNotDefaultValue(Id, nameof(Id), errorLocaction);
             FulcrumValidate.IsNotDefaultValue(ETag, nameof(ETag), errorLocaction);

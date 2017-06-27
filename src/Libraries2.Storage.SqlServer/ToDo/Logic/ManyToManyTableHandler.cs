@@ -1,14 +1,18 @@
 ﻿using System;
-using System.Data;
-using System.Diagnostics;
-using Dapper;
 using Xlent.Lever.Libraries2.Storage.SqlServer.Logic;
 using Xlent.Lever.Libraries2.Storage.SqlServer.Model;
 using Xlent.Lever.Libraries2.Storage.SqlServer.ToDo.Interfaces;
-using Xlent.Lever.Libraries2.Storage.SqlServer.ToDo.Models;
 
 namespace Xlent.Lever.Libraries2.Storage.SqlServer.ToDo.Logic
 {
+    /// <summary>
+    /// Many to many table
+    /// </summary>
+    /// <typeparam name="TFirstModel"></typeparam>
+    /// <typeparam name="TFirstTable"></typeparam>
+    /// <typeparam name="TManyToManyModel"></typeparam>
+    /// <typeparam name="TSecondModel"></typeparam>
+    /// <typeparam name="TSecondTable"></typeparam>
     public abstract class ManyToManyTableHandler<TFirstModel, TFirstTable, TManyToManyModel, TSecondModel, TSecondTable> : SingleTableHandler<TManyToManyModel>
         where TFirstModel : IDatabaseItem, new()
         where TFirstTable : SingleTableHandler<TFirstModel>, IPartInManyToMany<TFirstModel>
@@ -19,6 +23,13 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.ToDo.Logic
         private readonly TSecondTable _secondTableLogic;
         private readonly Guid _typeId;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <param name="firstTableLogic"></param>
+        /// <param name="secondTableLogic"></param>
+        /// <param name="typeId"></param>
         protected ManyToManyTableHandler(string connectionString, TFirstTable firstTableLogic, TSecondTable secondTableLogic, Guid typeId = default(Guid))
             :base(connectionString)
         {

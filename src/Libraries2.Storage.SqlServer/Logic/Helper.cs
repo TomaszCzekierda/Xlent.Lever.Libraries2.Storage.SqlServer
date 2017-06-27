@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Xlent.Lever.Libraries2.Standard.Storage.Model;
 using Xlent.Lever.Libraries2.Storage.SqlServer.Model;
-using Xlent.Lever.Libraries2.Storage.SqlServer.Storage;
 
 namespace Xlent.Lever.Libraries2.Storage.SqlServer.Logic
 {
