@@ -8,9 +8,9 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.Model
     /// A base class that has the mandatory properties.
     /// </summary>
     /// <remarks>
-    /// We recommend to inherit from <see cref="TimeStampedDatabaseItem"/>.
+    /// We recommend to inherit from <see cref="TimeStampedTableItem"/>.
     /// </remarks>
-    public abstract class DatabaseItem : IDatabaseItem
+    public abstract class TableItem : ITableItem
     {
         /// <inheritdoc />
         public Guid Id { get; set; }
@@ -43,7 +43,7 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.Model
         /// <inheritdoc />
         public override bool Equals(object obj)
         {
-            var o = obj as DatabaseItem;
+            var o = obj as TableItem;
             return o != null && Id.Equals(o.Id);
         }
 

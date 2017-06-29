@@ -7,7 +7,7 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.Logic
     /// Methods for searching (SELECT ... FROM ... WHERE ... GROUP BY) in an SQL database
     /// </summary>
     /// <typeparam name="TDatabaseItem"></typeparam>
-    public interface ISearch<TDatabaseItem> where TDatabaseItem : IDatabaseItem, new()
+    public interface ISearch<TDatabaseItem> where TDatabaseItem : ITableItem, new()
     {
         /// <summary>
         /// Fetches all rows for the current table.
@@ -80,7 +80,7 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.Logic
         /// <remarks>If more than one item is found, an excepton is thrown.</remarks>
         /// <remarks>If you just want the first item of possibly many that matches the where condition, 
         /// please use <see cref="SearchFirstWhereAsync"/></remarks>
-        Task<TDatabaseItem> SearchAdvancedSingle(string selectStatement, object param = null);
+        Task<TDatabaseItem> SearchAdvancedSingleAsync(string selectStatement, object param = null);
 
         /// <summary>
         /// Find the number of rows that fulfill the <paramref nae="where"/> condition..

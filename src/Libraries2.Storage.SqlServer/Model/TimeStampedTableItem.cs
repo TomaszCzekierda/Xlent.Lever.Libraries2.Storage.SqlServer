@@ -5,10 +5,10 @@ using Xlent.Lever.Libraries2.Standard.Storage.Model;
 namespace Xlent.Lever.Libraries2.Storage.SqlServer.Model
 {
     /// <summary>
-    /// Inhertis from <see cref="DatabaseItem"/> and adds time stamp columns.
+    /// Inhertis from <see cref="TableItem"/> and adds time stamp columns.
     /// </summary>
     /// <remarks>Please note it is not mandatory to inherit from this class to use the functionality in this package. It is only provided as a convenience class.</remarks>
-    public abstract class TimeStampedDatabaseItem : DatabaseItem, ITimeStamped
+    public abstract class TimeStampedTableItem : TableItem, ITimeStamped
     {
         /// <inheritdoc />
         public DateTimeOffset CreatedAt { get; set; }

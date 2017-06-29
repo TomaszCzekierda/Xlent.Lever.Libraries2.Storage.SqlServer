@@ -17,8 +17,9 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.Logic
     /// </summary>
     /// <typeparam name="TDatabaseItem"></typeparam>
     public class SingleTableHandler<TDatabaseItem> : Database, ICrudAll<TDatabaseItem, Guid>, ISearch<TDatabaseItem>
-        where TDatabaseItem : IDatabaseItem, new()
+        where TDatabaseItem : ITableItem, new()
     {
+        private TDatabaseItem _databaseItem;
         /// <summary>
         /// Constructor
         /// </summary>
@@ -26,12 +27,15 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.Logic
         public SingleTableHandler(string connectionString)
             : base(connectionString)
         {
+            _databaseItem = new TDatabaseItem();
         }
+
+        public string TableName => _databaseItem.TableName;
 
         #region ICrud
 
         /// <inheritdoc />
-        public async Task<TDatabaseItem> CreateAsync(TDatabaseItem item)
+        public virtual async Task<TDatabaseItem> CreateAsync(TDatabaseItem item)
         {
             var id = await InternalCreateAsync(item);
             return await ReadAsync(id);
@@ -177,11 +181,11 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.Logic
         {
             if (where == null) where = "1=1";
             var item = new TDatabaseItem();
-            return await SearchAdvancedSingle($"SELECT * FROM [{item.TableName}] WHERE ({@where})", param);
+            return await SearchAdvancedSingleAsync($"SELECT * FROM [{item.TableName}] WHERE ({@where})", param);
         }
 
         /// <inheritdoc />
-        public async Task<TDatabaseItem> SearchAdvancedSingle(string selectStatement, object param = null)
+        public async Task<TDatabaseItem> SearchAdvancedSingleAsync(string selectStatement, object param = null)
         {
             InternalContract.RequireNotNullOrWhitespace(selectStatement, nameof(selectStatement));
             return await SearchFirstAdvancedAsync(selectStatement, null, param);
