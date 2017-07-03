@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
@@ -19,7 +18,7 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.Logic
     public class SingleTableHandler<TDatabaseItem> : Database, ICrudAll<TDatabaseItem, Guid>, ISearch<TDatabaseItem>
         where TDatabaseItem : ITableItem, new()
     {
-        private TDatabaseItem _databaseItem;
+        private readonly TDatabaseItem _databaseItem;
         /// <summary>
         /// Constructor
         /// </summary>
@@ -30,6 +29,9 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.Logic
             _databaseItem = new TDatabaseItem();
         }
 
+        /// <summary>
+        /// The name of the table that this class handles.
+        /// </summary>
         public string TableName => _databaseItem.TableName;
 
         #region ICrud
@@ -107,10 +109,11 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.Logic
         #endregion
 
         #region ICrudAll
+
         /// <inheritdoc />
-        public async Task<IPageEnvelope<TDatabaseItem, Guid>> ReadAllAsync(Guid id, int offset = 0, int limit = PageInfo.DefaultLimit)
+        public Task<IPageEnvelope<TDatabaseItem, Guid>> ReadAllAsync(int offset = 0, int limit = 100)
         {
-            return await SearchAllAsync(null, offset, limit);
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc />

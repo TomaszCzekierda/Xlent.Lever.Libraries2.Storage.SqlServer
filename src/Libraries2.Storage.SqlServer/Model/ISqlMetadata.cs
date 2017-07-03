@@ -15,7 +15,7 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.Model
         string TableName { get; }
 
         /// <summary>
-        /// The list of columns that you have added, not including the columns in <see cref="IStorable{TId}"/> or in <see cref="ITimeStamped"/>.
+        /// The list of columns that you have added, not including the columns in <see cref="IStorableItem{TId}"/> or in <see cref="ITimeStamped"/>.
         /// </summary>
         IEnumerable<string> CustomColumnNames { get; }
 

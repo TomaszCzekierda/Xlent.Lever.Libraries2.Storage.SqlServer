@@ -7,7 +7,8 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.Logic
     /// Methods for searching (SELECT ... FROM ... WHERE ... GROUP BY) in an SQL database
     /// </summary>
     /// <typeparam name="TDatabaseItem"></typeparam>
-    public interface ISearch<TDatabaseItem> where TDatabaseItem : ITableItem, new()
+    public interface ISearch<TDatabaseItem>
+        where TDatabaseItem : ITableItem, new()
     {
         /// <summary>
         /// Fetches all rows for the current table.

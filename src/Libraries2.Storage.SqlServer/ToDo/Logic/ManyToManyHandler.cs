@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Dapper;
 using Xlent.Lever.Libraries2.Standard.Assert;
+using Xlent.Lever.Libraries2.Standard.Error.Logic;
 using Xlent.Lever.Libraries2.Standard.Storage.Model;
 using Xlent.Lever.Libraries2.Storage.SqlServer.Logic;
 using Xlent.Lever.Libraries2.Storage.SqlServer.Model;
@@ -42,7 +43,7 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.ToDo.Logic
         /// <param name="secondTableLogic"></param>
         /// <param name="typeId"></param>
         protected ManyToManyHandler(string connectionString, TFirstTable firstTableLogic, TSecondTable secondTableLogic, Guid typeId = default(Guid))
-            :base(connectionString)
+            : base(connectionString)
         {
             _firstTableLogic = firstTableLogic;
             _secondTableLogic = secondTableLogic;
@@ -56,21 +57,29 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.ToDo.Logic
         {
             return first ? "First" : "Second";
         }
-        // TODO: Implement many to many table.
 
         #region READ
-        public virtual async Task<int> ReadMaxSortOrderAsync(bool first, Guid id)
+        /// <summary>
+        /// Read the highest number for a sort order.
+        /// </summary>
+        /// <param name="first">True means to get max for FirstSortOrder, false means SecondSortOrder</param>
+        /// <param name="typeId">The id for the type of many to many relation that we want the max for.</param>
+        /// <returns>The maximum number for the specified sort order.</returns>
+        public virtual async Task<int> ReadMaxSortOrderAsync(bool first, Guid typeId = default(Guid))
         {
             var firstOrSecond = FirstOrSecond(first);
             var ignored = 0;
             var param = new DynamicParameters();
-            param.Add("FirstOrSecondId", id);
+            param.Add("FirstOrSecondId", typeId);
             param.Add("TypeId", _typeId);
             param.Add("MaxValue", ignored, null, ParameterDirection.Output);
-            var maxValue = await SearchAdvancedSingleAsync($"SELECT @MaxValue=MAX({firstOrSecond}SortOrder) FROM [{_manyToManyModel.TableName}] WHERE [{firstOrSecond}Id] = @FirstOrSecondId AND TypeId = @TypeId", param);
+            await SearchAdvancedSingleAsync($"SELECT @MaxValue=MAX({firstOrSecond}SortOrder) FROM [{_manyToManyModel.TableName}] WHERE [{firstOrSecond}Id] = @FirstOrSecondId AND TypeId = @TypeId", param);
             return param.Get<int?>("MaxValue") ?? 0;
         }
 
+        /// <summary>
+        /// Get the item that has the specified <paramref name="firstId"/> and <paramref name="secondId"/>.
+        /// </summary>
         public async Task<TManyToManyModel> ReadByFirstIdAndSecondIdAsync(Guid firstId, Guid secondId)
         {
             var param = new { FirstId = firstId, SecondId = secondId, TypeId = _typeId };
@@ -109,7 +118,7 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.ToDo.Logic
             if (item.SecondSortOrder == 1)
             {
                 var existing = await _firstTableLogic.ReadAsync(item.FirstId);
-                FulcrumAssert.IsNotNull(existing, $"{Namespace}: AC32BD77-4188-4E0C-AB88-4844B1B9216F", $"Expected item {item.FirstId} to exist in table {_secondModel.TableName}.");
+                FulcrumAssert.IsNotNull(existing, $"{Namespace}: AC32BD77-4188-4E0C-AB88-4844B1B9216F", $"Expected item {item.FirstId} to exist in table {_firstModel.TableName}.");
                 if (_firstTableLogic.NameOfForeignKey(_typeId) != null)
                 {
                     await _firstTableLogic.UpdateForeignKey(existing, item.SecondId, _typeId);
@@ -222,7 +231,11 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.ToDo.Logic
 
         #region DELETE
 
-        public void DeleteRelationshipsForDeletedId(Guid id)
+        /// <summary>
+        /// Delete all relationsships that contains the specified <paramref name="id"/>,
+        /// either as FirstId or SecondId.
+        /// </summary>
+        public void DeleteRelationshipsForDeletedId(Guid id = default(Guid))
         {
             using (IDbConnection db = NewSqlConnection())
             {
@@ -234,11 +247,17 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.ToDo.Logic
 
 
         #region SEARCH
+        /// <summary>
+        /// Find the item with sort order 1 and SecondId set to <paramref name="secondId"/>.
+        /// </summary>
         public async Task<TFirstModel> ReadDefaultFirstBySecondIdAsync(Guid secondId)
         {
             return await ReadDefaultByIdAsync<TFirstModel, TFirstTable>(true, _firstTableLogic, secondId);
         }
 
+        /// <summary>
+        /// Find the item with sort order 1 and FirstId set to <paramref name="firstId"/>.
+        /// </summary>
         public async Task<TSecondModel> ReadDefaultSecondByFirstIdAsync(Guid firstId)
         {
             return await ReadDefaultByIdAsync<TSecondModel, TSecondTable>(false, _secondTableLogic, firstId);
@@ -255,11 +274,17 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.ToDo.Logic
             return await logic.SearchAdvancedSingleAsync(selectStatement, new { Id = id, TypeId = _typeId });
         }
 
+        /// <summary>
+        /// Find all items with SecondId set to <paramref name="secondId"/>.
+        /// </summary>
         public async Task<PageEnvelope<TFirstModel>> SearchFirstBySecondId(Guid secondId, int offset = 0, int limit = PageInfo.DefaultLimit)
         {
             return await SearchByOtherIdAsync<TFirstModel, TFirstTable>(true, _firstTableLogic, secondId, offset, limit);
         }
 
+        /// <summary>
+        /// Find all items with FirstId set to <paramref name="firstId"/>.
+        /// </summary>
         public async Task<PageEnvelope<TSecondModel>> SearchSecondByFirstId(Guid firstId, int offset = 0, int limit = PageInfo.DefaultLimit)
         {
             return await SearchByOtherIdAsync<TSecondModel, TSecondTable>(true, _secondTableLogic, firstId, offset, limit);
@@ -277,10 +302,17 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.ToDo.Logic
             return await logic.SearchAdvancedAsync("SELECT COUNT(r.[Id])", "SELECT r.*", selectRest, $"m2m.[{firstOrSecond}SortOrder]", new { OtherId = otherId, TypeId = _typeId }, offset, limit);
         }
 
+        /// <summary>
+        /// Find all items in the first table by finding relations by the SecondId that has value <paramref name="secondId"/>.
+        /// </summary>
         public async Task<PageEnvelope<TFirstModel>> SearchFirstBySecondIdAndPrimaryId(Guid secondId, int offset = 0, int limit = PageInfo.DefaultLimit)
         {
             return await SearchByOtherIdAndPrimaryIdAsync<TFirstModel, TFirstTable>(true, _firstTableLogic, secondId, offset, limit);
         }
+
+        /// <summary>
+        /// Find all items in the second table by finding relations by the FirstId that has value <paramref name="firstId"/>.
+        /// </summary>
         public async Task<PageEnvelope<TSecondModel>> SearchSecondByFirstIdAndPrimaryId(Guid firstId, int offset = 0, int limit = PageInfo.DefaultLimit)
         {
             return await SearchByOtherIdAsync<TSecondModel, TSecondTable>(true, _secondTableLogic, firstId, offset, limit);
@@ -291,7 +323,7 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.ToDo.Logic
             where TLogic : SingleTableHandler<TModel>, IPartInManyToMany<TModel>
         {
             var nameOfPrimaryIdColumn = logic.NameOfForeignKey(_typeId);
-            if (nameOfPrimaryIdColumn == null) throw new NotImplementedException(nameof(nameOfPrimaryIdColumn));
+            if (nameOfPrimaryIdColumn == null) throw new FulcrumNotImplementedException(nameof(nameOfPrimaryIdColumn));
             var firstOrSecond = FirstOrSecond(first);
             var other = FirstOrSecond(!first);
             var selectRest = $"FROM [{_manyToManyModel.TableName}] AS m2m" +
@@ -300,11 +332,18 @@ namespace Xlent.Lever.Libraries2.Storage.SqlServer.ToDo.Logic
             return await logic.SearchAdvancedAsync("SELECT COUNT(r.[Id])", "SELECT r.*", selectRest, $"m2m.[{other}SortOrder]", new { OtherId = otherId, TypeId = _typeId }, offset, limit);
         }
 
+        /// <summary>
+        /// Find all relations that has FirstId set to <paramref name="firstId"/>.
+        /// </summary>
         protected async Task<PageEnvelope<TManyToManyModel>> SearchByFirstId(Guid firstId, int offset = 0, int limit = PageInfo.DefaultLimit)
         {
-            return await SearchWhereAsync("[FirstId]=@FirstId AND [TypeId]=@TypeId", "m2m.[FirstSortOrder]",  new { FirstId = firstId, TypeId = _typeId },offset, limit);
+            return await SearchWhereAsync("[FirstId]=@FirstId AND [TypeId]=@TypeId", "m2m.[FirstSortOrder]", new { FirstId = firstId, TypeId = _typeId }, offset, limit);
         }
 
+
+        /// <summary>
+        /// Find all relations that has SecondId set to <paramref name="secondId"/>.
+        /// </summary>
         protected async Task<PageEnvelope<TManyToManyModel>> SearchBySecondId(Guid secondId, int offset = 0, int limit = PageInfo.DefaultLimit)
         {
             return await SearchWhereAsync("[SecondId]=@SecondId AND [TypeId]=@TypeId", "m2m.[SecondSortOrder]", new { SecondId = secondId, TypeId = _typeId }, offset, limit);
